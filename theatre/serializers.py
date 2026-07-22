@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework import serializers
 
 from theatre.models import (
@@ -15,26 +16,30 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = User
         fields = ["id", "username"]
 
 
 class GenreSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Genre
         fields = ["id", "name"]
 
 
 class ActorSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Actor
         fields = ["id", "first_name", "last_name"]
 
 
 class PlaySerializer(serializers.ModelSerializer):
-    actors = ActorSerializer(many=True, read_only=True)
-    genres = GenreSerializer(many=True, read_only=True)
+    actors = ActorSerializer(many=True)
+    genres = GenreSerializer(many=True)
+
     class Meta:
         model = Play
         fields = ["id", "title", "description", "actors", "genres"]
@@ -49,23 +54,57 @@ class TheatreHallSerializer(serializers.ModelSerializer):
 
 
 class PerformanceSerializer(serializers.ModelSerializer):
-    play = PlaySerializer(read_only=True)
-    theatre_hall = TheatreHallSerializer(read_only=True)
+    play = PlaySerializer()
+    theatre_hall = TheatreHallSerializer()
+
     class Meta:
         model = Performance
         fields = ["id", "play", "theatre_hall", "show_time"]
 
 
 class ReservationSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = UserSerializer()
+
     class Meta:
         model = Reservation
         fields = ["id", "created_at", "user"]
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    performance = PerformanceSerializer(read_only=True)
-    reservation = ReservationSerializer(read_only=True)
+    # performance = PerformanceSerializer()
+    reservation = ReservationSerializer()
+
     class Meta:
         model = Ticket
         fields = ["id", "row", "seat", "performance", "reservation"]
+
+
+class TicketCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ticket
+        fields = ["row", "seat", "performance"]
+
+
+class ReservationCreateSerializer(serializers.ModelSerializer):
+    tickets = TicketCreateSerializer(many=True)
+
+    class Meta:
+        model = Reservation
+        fields = ["tickets"]
+
+    @transaction.atomic
+    def create(self, validated_data):
+        tickets_data = validated_data.pop("tickets")
+
+        reservation = Reservation.objects.create(
+            user=User.objects.first()
+        )
+
+        for ticket_data in tickets_data:
+            Ticket.objects.create(
+                reservation=reservation,
+                **ticket_data
+            )
+
+        return reservation
