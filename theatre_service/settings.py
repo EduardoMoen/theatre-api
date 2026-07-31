@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'theatre',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,16 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'theatre_service.urls'
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Theatre API",
+    "DESCRIPTION": "API for theater management",
+    "VERSION": "1.0.0",
+}
 
 TEMPLATES = [
     {
