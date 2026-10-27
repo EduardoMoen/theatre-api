@@ -142,6 +142,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
         return ReservationSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 
 @extend_schema_view(
     list=extend_schema(summary="List tickets"),
