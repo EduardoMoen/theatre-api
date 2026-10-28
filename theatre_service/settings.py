@@ -65,6 +65,15 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Theatre API",
     "DESCRIPTION": "API for theater management",
     "VERSION": "1.0.0",
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
 }
 
 TEMPLATES = [
