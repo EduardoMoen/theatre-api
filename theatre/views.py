@@ -28,6 +28,8 @@ from theatre.serializers import (
     TicketListSerializer,
 )
 
+from rest_framework.permissions import IsAuthenticated
+
 
 @extend_schema_view(
     list=extend_schema(summary="List genres"),
@@ -134,7 +136,11 @@ class PerformanceViewSet(viewsets.ModelViewSet):
     destroy=extend_schema(summary="Cancel a reservation"),
 )
 class ReservationViewSet(viewsets.ModelViewSet):
-    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Reservation.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -151,5 +157,10 @@ class ReservationViewSet(viewsets.ModelViewSet):
     retrieve=extend_schema(summary="Retrieve a ticket"),
 )
 class TicketViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Ticket.objects.all()
     serializer_class = TicketListSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Ticket.objects.filter(
+            reservation__user=self.request.user
+        )

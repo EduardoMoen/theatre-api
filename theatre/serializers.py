@@ -106,14 +106,30 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
         model = Reservation
         fields = ["tickets"]
 
+    def validate_tickets(self, tickets):
+        seats = [
+            (
+                ticket["performance"].id,
+                ticket["row"],
+                ticket["seat"],
+            )
+            for ticket in tickets
+        ]
+
+        if len(seats) != len(set(seats)):
+            raise serializers.ValidationError(
+                "The same seat cannot be reserved more than once "
+                "in the same reservation."
+            )
+
+        return tickets
+
     @transaction.atomic
     def create(self, validated_data):
         tickets_data = validated_data.pop("tickets")
         user = validated_data.pop("user")
 
-        reservation = Reservation.objects.create(
-            user=user
-        )
+        reservation = Reservation.objects.create(user=user)
 
         for ticket_data in tickets_data:
             Ticket.objects.create(
